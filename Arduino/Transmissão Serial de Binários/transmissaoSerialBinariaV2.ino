@@ -1,7 +1,7 @@
 /*
 * Código para envio de 8 dígitos binários entre dois nRF24L01+ rádios
 * Envio de informações por struct
-* Última atualização: 07/06/2016
+* Última atualização: 15/06/2016
 */
 
 #include <SPI.h>
@@ -42,7 +42,7 @@ struct errorStruct{
 struct payloadStruct {
   unsigned int totalPayloads = 0;
   unsigned int errorPayloads = 0;  
-  unsigned int porcentagemErros = 0;
+  float porcentagemErros = 0;
 }myPayloads;
 
 void setup() {
@@ -167,14 +167,14 @@ void pongBack() {
       Serial.print(myData._micros);  
       Serial.print(F(" : "));
       for (int i=0;i<16;i++) {
-        if(myData.value[i] = true) {
+        if(myData.value[i] == true) {
           Serial.print('1');
         }
-        else {
+        else if(myData.value[i] == false) {
           Serial.print('0');
         }
       }
-      Serial.println("");
+      // Serial.println("");
       // Serial.println(myData.value);
       myPayloads.totalPayloads++;
   }
@@ -218,7 +218,7 @@ void pingOut() {
         Serial.print(F("  Total de payloads perdidos: "));
         Serial.println(myPayloads.errorPayloads);
         Serial.print(F("  Porcentagem de pacotes perdidos: "));
-        myPayloads.porcentagemErros = (myPayloads.errorPayloads/myPayloads.totalPayloads)*100;
+        myPayloads.porcentagemErros = ((myPayloads.errorPayloads)/(myPayloads.totalPayloads))*100;
         Serial.println(myPayloads.porcentagemErros);
         // Serial.println("%%");
         // Correção de possíveis perdas de pacote por distância ou obstáculos na transmissão entre os nós
@@ -242,10 +242,10 @@ void pingOut() {
         Serial.println(time-myData._micros);
         Serial.print(F(" Valor da letra "));
         for (int i=0;i<16;i++) {
-          if(myData.value[i] = true) {
+          if(myData.value[i] == true) {
             Serial.print('1');
           }
-          else {
+          else if(myData.value[i] == false) {
             Serial.print('0');
           }
         }
@@ -258,7 +258,7 @@ void pingOut() {
         Serial.print(F(" Total de payloads perdidos: "));
         Serial.println(myPayloads.errorPayloads);
         Serial.print(F(" Porcentagem de pacotes perdidos: "));
-        myPayloads.porcentagemErros = (myPayloads.errorPayloads/myPayloads.totalPayloads)*100;
+        myPayloads.porcentagemErros = ((myPayloads.errorPayloads)/(myPayloads.totalPayloads))*100;
         Serial.println(myPayloads.porcentagemErros);
         // Serial.println("%%");
         // Correção de possíveis perdas de pacote por distância ou obstáculos na transmissão entre os nós
@@ -271,5 +271,5 @@ void pingOut() {
     }
 
     // Tenta após um segundo novamente
-    delay(1000);
+    delay(2000);
 }
