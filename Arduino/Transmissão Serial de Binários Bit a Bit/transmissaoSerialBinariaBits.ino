@@ -124,7 +124,7 @@ void pongBack() {
       Serial.print(F(" : "));
       if (myData.lostBits > 0) {
         for (int i=0;i<myData.lostBits;i++) {
-          myData.finalValue[finalValueIndex] = 'X';
+          myData.finalValue[myData.finalValueIndex] = 'X';
           myData.finalValueIndex++;
           myPayloads.totalIterations--;
         }
@@ -132,12 +132,15 @@ void pongBack() {
       myData.finalValue[myData.finalValueIndex] = myData.sentValue;
       myData.finalValueIndex++;
       for (int i=0;i<myData.finalValueIndex;i++) {
-        Serial.print(myData.finalValue[myData.finalValueIndex]);
+        Serial.print(myData.finalValue[i]);
       }
-      // Serial.println("");
       // Serial.println(myData.value);
       myPayloads.totalIterations--;
       myPayloads.totalPayloads++;
+      // Para a recepção para permitir a escrita
+      radio.stopListening();
+      radio.write( &myData, sizeof(myData) );
+      Serial.println("");
   }
   else if (myPayloads.totalIterations == 0) {
     Serial.println("Fim de transmissao!");
