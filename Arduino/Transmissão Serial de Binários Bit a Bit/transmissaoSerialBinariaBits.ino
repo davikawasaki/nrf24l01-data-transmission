@@ -132,7 +132,7 @@ void pongBack() {
       myData.finalValue[myData.finalValueIndex] = myData.sentValue;
       myData.finalValueIndex++;
       for (int i=0;i<myData.finalValueIndex;i++) {
-        Serial.print(myData.finalValue[i]);
+        Serial.print(char(myData.finalValue[i]));
       }
       // Serial.println(myData.value);
       myPayloads.totalIterations--;
@@ -223,7 +223,7 @@ void pingOut() {
         Serial.println(time-myData._micros);
         Serial.print(F(" Valor da palavra "));
         for (int i=0;i<myData.finalValueIndex;i++) {
-          Serial.print(myData.finalValue[i]);
+          Serial.print(char(myData.finalValue[i]));
         }
         // Serial.println(myData.value);
         myPayloads.totalIterations--;
