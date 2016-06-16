@@ -155,6 +155,9 @@ void pongBack() {
       radio.stopListening();
 
       // AQUI ENTRA A CORREÇÃO DE ERROS
+      // for(int i=0, i<16, i++) {
+        
+      // }
 
       radio.write( &myData, sizeof(myData) );
 
@@ -163,7 +166,16 @@ void pongBack() {
       Serial.print(F("Recebido o pacote "));
       Serial.print(myData._micros);  
       Serial.print(F(" : "));
-      Serial.println(char(int(myData.value)));
+      for (int i=0;i<16;i++) {
+        if(myData.value[i] = true) {
+          Serial.print('1');
+        }
+        else {
+          Serial.print('0');
+        }
+      }
+      Serial.println("");
+      // Serial.println(myData.value);
       myPayloads.totalPayloads++;
   }
 }
@@ -208,7 +220,7 @@ void pingOut() {
         Serial.print(F("  Porcentagem de pacotes perdidos: "));
         myPayloads.porcentagemErros = (myPayloads.errorPayloads/myPayloads.totalPayloads)*100;
         Serial.println(myPayloads.porcentagemErros);
-        Serial.println("%%");
+        // Serial.println("%%");
         // Correção de possíveis perdas de pacote por distância ou obstáculos na transmissão entre os nós
         if(micros() == 60000 && myPayloads.porcentagemErros >= 70) {
           radio.setPALevel(RF24_PA_MAX); // Aumenta a potência do rádio para máximo para contornar perda de pacotes
@@ -229,7 +241,16 @@ void pingOut() {
         Serial.print(F(", Delay de retorno "));
         Serial.println(time-myData._micros);
         Serial.print(F(" Valor da letra "));
-        Serial.println(char(int(myData.value)));
+        for (int i=0;i<16;i++) {
+          if(myData.value[i] = true) {
+            Serial.print('1');
+          }
+          else {
+            Serial.print('0');
+          }
+        }
+        Serial.println("");
+        // Serial.println(myData.value);
         myPayloads.totalPayloads++;
         Serial.println(F("-----------------------------------------------------"));
         Serial.print(F(" Total de payloads: "));
@@ -239,7 +260,7 @@ void pingOut() {
         Serial.print(F(" Porcentagem de pacotes perdidos: "));
         myPayloads.porcentagemErros = (myPayloads.errorPayloads/myPayloads.totalPayloads)*100;
         Serial.println(myPayloads.porcentagemErros);
-        Serial.println("%%");
+        // Serial.println("%%");
         // Correção de possíveis perdas de pacote por distância ou obstáculos na transmissão entre os nós
         if(micros() == 60000 && myPayloads.porcentagemErros >= 70) {
           radio.setPALevel(RF24_PA_MAX); // Aumenta a potência do rádio para máximo para contornar perda de pacotes
