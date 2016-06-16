@@ -110,10 +110,19 @@ void pongBack() {
       while (radio.available()) {
         // Obtém o pacote de dados
         radio.read( &myData, sizeof(myData) );
+        if (myData.lostBits > 0) {
+          for (int i=0;i<myData.lostBits;i++) {
+            myData.finalValue[myData.finalValueIndex] = 'X';
+            myData.finalValueIndex++;
+            myPayloads.totalIterations--;
+          }
+          myData.lostBits = 0;
+        }
+        myData.finalValue[myData.finalValueIndex] = myData.sentValue;
+        myData.finalValueIndex++;
       }
       // Para a recepção para permitir a escrita
       radio.stopListening();
-
       radio.write( &myData, sizeof(myData) );
 
       // Resume a recepção para obter os próximos pacotes
@@ -122,25 +131,14 @@ void pongBack() {
       Serial.print(F("Recebido o pacote "));
       Serial.print(myData._micros);  
       Serial.print(F(" : "));
-      if (myData.lostBits > 0) {
-        for (int i=0;i<myData.lostBits;i++) {
-          myData.finalValue[myData.finalValueIndex] = 'X';
-          myData.finalValueIndex++;
-          myPayloads.totalIterations--;
-        }
-      }
-      myData.finalValue[myData.finalValueIndex] = myData.sentValue;
-      myData.finalValueIndex++;
-      for (int i=0;i<myData.finalValueIndex;i++) {
+      // Imprime bit a bit na linha
+      for (int i=0;i<(myData.finalValueIndex);i++) {
         Serial.print(char(myData.finalValue[i]));
       }
+      Serial.println(" ");
       // Serial.println(myData.value);
       myPayloads.totalIterations--;
       myPayloads.totalPayloads++;
-      // Para a recepção para permitir a escrita
-      radio.stopListening();
-      radio.write( &myData, sizeof(myData) );
-      Serial.println("");
   }
   else if (myPayloads.totalIterations == 0) {
     Serial.println("Fim de transmissao!");
@@ -222,9 +220,10 @@ void pingOut() {
         Serial.print(F(", Delay de retorno "));
         Serial.println(time-myData._micros);
         Serial.print(F(" Valor da palavra "));
-        for (int i=0;i<myData.finalValueIndex;i++) {
+        for (int i=0;i<(myData.finalValueIndex);i++) {
           Serial.print(char(myData.finalValue[i]));
         }
+        Serial.println(" ");
         // Serial.println(myData.value);
         myPayloads.totalIterations--;
         myPayloads.totalPayloads++;
