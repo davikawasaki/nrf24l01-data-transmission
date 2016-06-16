@@ -129,8 +129,11 @@ void pongBack() {
           myPayloads.totalIterations--;
         }
       }
-      myData.finalValue[myData.finalValueIndex] = myData.sentValue;
+      myData.finalValue[myData.finalValueIndex] = char(myData.sentValue);
       myData.finalValueIndex++;
+      for (int i=0;i<myData.finalValueIndex;i++) {
+        Serial.print(char(myData.finalValue[myData.finalValueIndex]));
+      }
       // Serial.println("");
       // Serial.println(myData.value);
       myPayloads.totalIterations--;
@@ -180,6 +183,13 @@ void pingOut() {
         
     if ( timeout ){
         Serial.println(F("Falha na transmissao, tempo de resposta esgotado!"));
+        Serial.println("");
+        // for (int i=0;i<10;i++) {
+        //   myData.finalValue[i] = '1';
+        // }
+        // for (int i=0;i<10;i++) {
+        //   Serial.print(char(myData.finalValue[myData.finalValueIndex]));
+        // }
         Serial.println(F("-----------------------------------------------------"));
         Serial.print(F("  Total de payloads: "));
         Serial.println(myPayloads.totalPayloads);
@@ -210,7 +220,7 @@ void pingOut() {
         Serial.println(time-myData._micros);
         Serial.print(F(" Valor da palavra "));
         for (int i=0;i<myData.finalValueIndex;i++) {
-          Serial.print(myData.finalValue[myData.finalValueIndex]);
+          Serial.print(char(myData.finalValue[i]));
         }
         // Serial.println(myData.value);
         myPayloads.totalIterations--;
