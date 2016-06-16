@@ -26,7 +26,7 @@ bool serialReading = 0;
 // Struct com tempo, opção do binário e valor do binário a ser transmitido
 struct dataStruct{
   unsigned long _micros;
-  char sentValue = 0;
+  char sentValue = '0';
   unsigned int lostBits;
   char finalValue[100];
   // Utilizado para armazenar o endereço do vetor de char
@@ -124,15 +124,15 @@ void pongBack() {
       Serial.print(F(" : "));
       if (myData.lostBits > 0) {
         for (int i=0;i<myData.lostBits;i++) {
-          myData.finalValue[i] = 'X';
+          myData.finalValue[finalValueIndex] = 'X';
           myData.finalValueIndex++;
           myPayloads.totalIterations--;
         }
       }
-      myData.finalValue[myData.finalValueIndex] = char(myData.sentValue);
+      myData.finalValue[myData.finalValueIndex] = myData.sentValue;
       myData.finalValueIndex++;
       for (int i=0;i<myData.finalValueIndex;i++) {
-        Serial.print(char(myData.finalValue[myData.finalValueIndex]));
+        Serial.print(myData.finalValue[myData.finalValueIndex]);
       }
       // Serial.println("");
       // Serial.println(myData.value);
@@ -220,7 +220,7 @@ void pingOut() {
         Serial.println(time-myData._micros);
         Serial.print(F(" Valor da palavra "));
         for (int i=0;i<myData.finalValueIndex;i++) {
-          Serial.print(char(myData.finalValue[i]));
+          Serial.print(myData.finalValue[i]);
         }
         // Serial.println(myData.value);
         myPayloads.totalIterations--;
