@@ -42,6 +42,8 @@ struct payloadStruct {
 
 float errorPercentage = 0;
 
+boolean erroGeral = false;
+
 void setup() {
 
   // Determinar o 'baud rate' a realizar a comunicação com o hardware
@@ -52,13 +54,13 @@ void setup() {
   radio.begin();
 
   // Seta o nível da potência. RF24_PA_MAX é o valor padrão, porém nesse caso começa-se com valor baixo.
-  radio.setPALevel(RF24_PA_LOW);
+  radio.setPALevel(RF24_PA_MIN);
 
   // Seta a velocidade da transmissão.
   radio.setDataRate(RF24_2MBPS);
 
   // Seta o canal da transmissão (4GHz + 0-125).
-  radio.setChannel(10);
+  radio.setChannel(6);
   
   // Abre um pipe de escrita e leitura para cada rádio, com um endereço oposto
   if(radioNumber){
@@ -110,6 +112,7 @@ void pongBack() {
         if (myData.lostBits > 0) {
           for (int i=0;i<myData.lostBits;i++) {
             myData.receivedFinalValue[finalValueIndex] = 'X';
+            myData.sentFinalValue[finalValueIndex] = 'X';
             finalValueIndex++;
             myPayloads.totalIterations--;
           }
@@ -159,7 +162,8 @@ void pongBack() {
 
 // Função respectiva ao nó transmissor
 void pingOut() {
-    if (myPayloads.totalIterations == 0) {
+    erroGeral = false;
+    if (myPayloads.totalIterations < 1) {
       for(int i=0;i<10;i++){
         radio.write( &myData, sizeof(myData));
         Serial.println("Fim de transmissao!");
@@ -180,6 +184,7 @@ void pingOut() {
        Serial.println(" O envio falhou!");
        myPayloads.errorPayloads++;
        myPayloads.totalPayloads++;
+       erroGeral = true;
        myData.lostBits++;
        myPayloads.totalIterations--;
      }
@@ -209,13 +214,17 @@ void pingOut() {
         // for (int i=0;i<10;i++) {
         //   Serial.print(char(myData.receivedFinalValue[finalValueIndex]));
         // }
+        if(!erroGeral) {
+          myPayloads.errorPayloads++;
+          myPayloads.totalPayloads++;
+        }
         Serial.println(F("-----------------------------------------------------"));
         Serial.print(F("  Total de payloads: "));
         Serial.println(myPayloads.totalPayloads);
         Serial.print(F("  Total de payloads perdidos: "));
         Serial.println(myPayloads.errorPayloads);
         Serial.print(F("  Porcentagem de pacotes perdidos: "));
-        errorPercentage = ((myPayloads.errorPayloads)/(myPayloads.totalPayloads))*100;
+        errorPercentage = ((float(myPayloads.errorPayloads))/(float(myPayloads.totalPayloads)))*100;
         Serial.println(errorPercentage);
         // Serial.println("%%");
         // Correção de possíveis perdas de pacote por distância ou obstáculos na transmissão entre os nós
@@ -253,7 +262,7 @@ void pingOut() {
         Serial.print(F("  Total de payloads perdidos: "));
         Serial.println(myPayloads.errorPayloads);
         Serial.print(F("  Porcentagem de pacotes perdidos: "));
-        errorPercentage = ((myPayloads.errorPayloads)/(myPayloads.totalPayloads))*100;
+        errorPercentage = ((float(myPayloads.errorPayloads))/(float(myPayloads.totalPayloads)))*100;
         Serial.println(errorPercentage);
         // Serial.println("%%");
         // Correção de possíveis perdas de pacote por distância ou obstáculos na transmissão entre os nós
@@ -264,7 +273,7 @@ void pingOut() {
         }
         Serial.println(F("-----------------------------------------------------"));
     }
-
+    Serial.println(myPayloads.totalIterations);
     // Tenta após um segundo novamente
     delay(1000);
 }
