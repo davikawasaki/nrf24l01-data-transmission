@@ -31,7 +31,6 @@ struct dataStruct{
   unsigned int lostBits;
   char receivedFinalValue[MAX_NUM_PAYLOADS];
   char sentFinalValue[MAX_NUM_PAYLOADS];
-  unsigned int totalIterations = MAX_NUM_PAYLOADS; // Estabelece uma comunicação que trafegará MAX_NUM_PAYLOADS bits, decrementando de acordo com a quantidade recebida
 }myData;
 
 // Struct com informações de payloads
@@ -39,6 +38,7 @@ struct payloadStruct {
   unsigned int totalPayloads = 0;
   unsigned int errorPayloads = 0;  
   float errorPercentage = 0;
+  unsigned int totalIterations = MAX_NUM_PAYLOADS; // Estabelece uma comunicação que trafegará MAX_NUM_PAYLOADS bits, decrementando de acordo com a quantidade recebida
 }myPayloads;
 
 void setup() {
@@ -101,7 +101,7 @@ void loop() {
 
 // Função respectiva ao nó receptor
 void pongBack() {
-  if( radio.available() && myData.totalIterations > 0 ){
+  if( radio.available() && myPayloads.totalIterations > 0 ){
       // Enquanto existe informação a ser recebida
       while (radio.available()) {
         // Obtém o pacote de dados
@@ -110,7 +110,7 @@ void pongBack() {
           for (int i=0;i<myData.lostBits;i++) {
             myData.receivedFinalValue[finalValueIndex] = 'X';
             finalValueIndex++;
-            myData.totalIterations--;
+            myPayloads.totalIterations--;
           }
           myData.lostBits = 0;
         }
@@ -134,10 +134,10 @@ void pongBack() {
       Serial.println(" ");
       // Serial.println(myData.value);
       // Decrementando e incrementando contadores de iteração e de total de payloads
-      myData.totalIterations--;
+      myPayloads.totalIterations--;
       myPayloads.totalPayloads++;
   }
-  else if (myData.totalIterations == 0) {
+  else if (myPayloads.totalIterations == 0) {
     radio.read( &myData, sizeof(myData) );
     // Correção do pacote final
     for (int i=0;i<finalValueIndex;i++) {
@@ -158,7 +158,7 @@ void pongBack() {
 
 // Função respectiva ao nó transmissor
 void pingOut() {
-    if (myData.totalIterations == 0) {
+    if (myPayloads.totalIterations == 0) {
       radio.write( &myData, sizeof(myData));
       Serial.println("Fim de transmissao!");
       Serial.end();
@@ -177,7 +177,7 @@ void pingOut() {
        myPayloads.errorPayloads++;
        myPayloads.totalPayloads++;
        myData.lostBits++;
-       myData.totalIterations--;
+       myPayloads.totalIterations--;
      }
         
     // Volta o rádio para estado de receptor
@@ -241,14 +241,14 @@ void pingOut() {
         }
         Serial.println(" ");
         // Serial.println(myData.value);
-        myData.totalIterations--;
+        myPayloads.totalIterations--;
         myPayloads.totalPayloads++;
         Serial.println(F("-----------------------------------------------------"));
-        Serial.print(F(" Total de payloads: "));
+        Serial.print(F("  Total de payloads: "));
         Serial.println(myPayloads.totalPayloads);
-        Serial.print(F(" Total de payloads perdidos: "));
+        Serial.print(F("  Total de payloads perdidos: "));
         Serial.println(myPayloads.errorPayloads);
-        Serial.print(F(" Porcentagem de pacotes perdidos: "));
+        Serial.print(F("  Porcentagem de pacotes perdidos: "));
         myPayloads.errorPercentage = ((myPayloads.errorPayloads)/(myPayloads.totalPayloads))*100;
         Serial.println(myPayloads.errorPercentage);
         // Serial.println("%%");
