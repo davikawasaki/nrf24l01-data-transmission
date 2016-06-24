@@ -43,10 +43,15 @@ The last updated Arduino code used is the 'transmissaoSerialBinariaBits.ino'. Th
 To test a basic transmission, follow these steps:
 
 1) Open the 'transmissaoSerialBinariaBits.ino' code;
+
 2) Compile the code to an Arduino board with the transceptor connected (verify the nRF24L01 tmrh20 documentation for the hardware connections);
+
 3) Open the 'transmissaoSerialBinariaBits.ino' code in another computer;
+
 4) Change the 'radioNumber' variable to 1 (distinct ID for each node);
+
 5) Compile the code to an Arduino board with the transceptor connected (verify the nRF24L01 tmrh20 documentation for the hardware connections);
+
 6) Turn on the serial window in each Arduino IDE and test the transmission.
 
 # CONTACT & FEEDBACKS
