@@ -7,6 +7,7 @@ The goal was to transmit binary data payloads through the 2.4GHz nRF24L01 channe
 # IDE & LANGUAGES USED
 
 1) Arduino IDE 1.6.8: https://github.com/arduino/Arduino/tree/1.6.8
+
 2) Python IDE 2.7: https://www.python.org/download/releases/2.7/
 
 # LIBRARIES & MODULES USED
