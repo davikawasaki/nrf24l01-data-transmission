@@ -1,13 +1,15 @@
 /*
-* Código para envio de N dígitos binários bit a bit entre dois nRF24L01+ rádios
+* Código para envio e recepção de N dígitos binários bit a bit entre dois nRF24L01+ rádios
 * Envio de informações por struct
-* Última atualização: 16/06/2016
+* Última atualização: 24/06/2016
 */
 
+// Bibliotecas de protocolo serial e do módulo nRF24L01
 #include <SPI.h>
 #include "nRF24.h"
 
-#define MAX_NUM_PAYLOADS 10
+// Determina o máximo de pacotes a serem transmitidos por envio
+#define MAX_NUM_PAYLOADS 20
 
 // Determina dois endereços de Pipe para conversa entre os nós (endereço de 5 bytes)
 byte addresses[][6] = {"1Node","2Node"};
@@ -40,8 +42,10 @@ struct payloadStruct {
   unsigned int totalIterations = MAX_NUM_PAYLOADS; // Estabelece uma comunicação que trafegará MAX_NUM_PAYLOADS bits, decrementando de acordo com a quantidade recebida
 }myPayloads;
 
+// Porcentagem instantânea de erro obtida pelos pacotes perdidos/pacotes recebidos
 float errorPercentage = 0;
 
+// Flag de segurança para incrementar e decrementar contadores
 boolean erroGeral = false;
 
 void setup() {
@@ -54,7 +58,7 @@ void setup() {
   radio.begin();
 
   // Seta o nível da potência. RF24_PA_MAX é o valor padrão, porém nesse caso começa-se com valor baixo.
-  radio.setPALevel(RF24_PA_MIN);
+  radio.setPALevel(RF24_PA_MAX);
 
   // Seta a velocidade da transmissão.
   radio.setDataRate(RF24_2MBPS);
@@ -95,7 +99,7 @@ void loop() {
       Serial.print(F("*** MUDANDO PARA PAPEL DE TRANSMISSOR -- DIGITE 'R' PARA MUDAR"));
       role = 1;                  // Torna-se o transmissor primário
     } else if ( c == 'R' && role == 1 ) {
-      Serial.println(F("*** MUDANDO PARA PAPEL DE RECEPTOR -- DIGITE A OPCAO A/B/C/D DE BINARIO E DEPOIS 'T' PARA MUDAR"));      
+      Serial.println(F("*** MUDANDO PARA PAPEL DE RECEPTOR -- DIGITE 'T' PARA MUDAR"));      
       role = 0;                // Torna-se o receptor primário
       radio.startListening();   
     } 
@@ -109,15 +113,20 @@ void pongBack() {
       while (radio.available()) {
         // Obtém o pacote de dados
         radio.read( &myData, sizeof(myData) );
+        // Verifica se foram perdidos pacotes de transmissão anteriores ao pacote recebido
         if (myData.lostBits > 0) {
           for (int i=0;i<myData.lostBits;i++) {
+            // Para a quantidade de pacotes perdidos atribui-se N don't cares X
             myData.receivedFinalValue[finalValueIndex] = 'X';
             myData.sentFinalValue[finalValueIndex] = 'X';
+            // Incrementa o índice do valor final e decrementa o total de interações previamente estabelecido
             finalValueIndex++;
             myPayloads.totalIterations--;
           }
+          // Zera a quantidade de pacotes perdidos para enviar ao transmissor
           myData.lostBits = 0;
         }
+        // Atribui o valor recebido no pacote da transmissão, incrementando o índice do valor final
         myData.receivedFinalValue[finalValueIndex] = myData.sentValue;
         finalValueIndex++;
       }
@@ -141,6 +150,7 @@ void pongBack() {
       myPayloads.totalIterations--;
       myPayloads.totalPayloads++;
   }
+  // Após o fim da quantidade de interações previamente estabelecidas
   else if (myPayloads.totalIterations == 0) {
     radio.read( &myData, sizeof(myData) );
     // Correção do pacote final
@@ -164,9 +174,10 @@ void pongBack() {
 void pingOut() {
     erroGeral = false;
     if (myPayloads.totalIterations < 1) {
+      // Garante que caso o último pacote enviado não seja entregue, ele dispare 10 pacotes de segurança
       for(int i=0;i<10;i++){
         radio.write( &myData, sizeof(myData));
-        Serial.println("Fim de transmissao!");
+        // Serial.println("Fim de transmissao!");
       }
       Serial.println("Fim de transmissao!");
       Serial.end();
@@ -181,6 +192,7 @@ void pingOut() {
     //   myData.sentValue = '1'; // Determina mudança do valor de bit após metade do tempo
     // }
      if (!radio.write( &myData, sizeof(myData) )){
+       // Caso o envio não seja feito pelo transmissor, incrementa-se o número de pacotes perdidos, de pacotes enviados, seta a flag de segurança, incrementa a quantidade de bits perdidos e decrementa a de interações
        Serial.println(" O envio falhou!");
        myPayloads.errorPayloads++;
        myPayloads.totalPayloads++;
@@ -197,6 +209,7 @@ void pingOut() {
     // Instancia uma variável para indicar se a resposta foi recebida ou não
     boolean timeout = false;
     
+    // Verifica o valor retornado de ACK
     while ( ! radio.available() ){
       // Se a espera superou 200ms, indica um timeout e sai do laço
       if (micros() - started_waiting_at > 200000 ){
@@ -204,19 +217,22 @@ void pingOut() {
           break;
       }      
     }
-        
+    // Se o ACK não foi recebido, entra na condicional
     if ( timeout ){
         Serial.println(F("Falha na transmissao, tempo de resposta esgotado!"));
         Serial.println("");
+        
         // for (int i=0;i<10;i++) {
         //   myData.receivedFinalValue[i] = '1';
         // }
         // for (int i=0;i<10;i++) {
         //   Serial.print(char(myData.receivedFinalValue[finalValueIndex]));
         // }
+        // Verifica se os contadores já foram incrementados e decrementados por meio da flag
         if(!erroGeral) {
           myPayloads.errorPayloads++;
           myPayloads.totalPayloads++;
+          myPayloads.totalIterations--;
         }
         Serial.println(F("-----------------------------------------------------"));
         Serial.print(F("  Total de payloads: "));
@@ -224,7 +240,7 @@ void pingOut() {
         Serial.print(F("  Total de payloads perdidos: "));
         Serial.println(myPayloads.errorPayloads);
         Serial.print(F("  Porcentagem de pacotes perdidos: "));
-        errorPercentage = ((float(myPayloads.errorPayloads))/(float(myPayloads.totalPayloads)))*100;
+        errorPercentage = ((float(myPayloads.errorPayloads))/(float(myPayloads.totalPayloads)))*100; // Casting necessário para cálculo de float
         Serial.println(errorPercentage);
         // Serial.println("%%");
         // Correção de possíveis perdas de pacote por distância ou obstáculos na transmissão entre os nós
@@ -247,15 +263,20 @@ void pingOut() {
         Serial.print(F(", Delay de retorno "));
         Serial.println(time-myData._micros);
         Serial.print(F(" Valor da palavra "));
+        // Atribui o valor recebido no pacote ao último valor da array da palavra enviada
         myData.sentFinalValue[finalValueIndex] = myData.sentValue;
         finalValueIndex++;
+        // Imprime na linha o valor da palavra bit a bit até a última posição recebida (impressão instantânea)
         for (int i=0;i<finalValueIndex;i++) {
           Serial.print(char(myData.sentFinalValue[i]));
         }
         Serial.println(" ");
         // Serial.println(myData.value);
-        myPayloads.totalIterations--;
-        myPayloads.totalPayloads++;
+        // Verifica se os contadores já foram incrementados e decrementados por meio da flag
+        if(!erroGeral) {
+          myPayloads.totalIterations--;
+          myPayloads.totalPayloads++;
+        }
         Serial.println(F("-----------------------------------------------------"));
         Serial.print(F("  Total de payloads: "));
         Serial.println(myPayloads.totalPayloads);
@@ -273,7 +294,7 @@ void pingOut() {
         }
         Serial.println(F("-----------------------------------------------------"));
     }
-    Serial.println(myPayloads.totalIterations);
+    // Serial.println(myPayloads.totalIterations);
     // Tenta após um segundo novamente
     delay(1000);
 }
